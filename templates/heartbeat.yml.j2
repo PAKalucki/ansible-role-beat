@@ -1,0 +1,20 @@
+heartbeat.config.monitors:
+  path: {{ beat_config_path }}/conf.d/*.yml
+  reload.enabled: {{ beat_reload_config }}
+  reload.period: {{ beat_reload_period }}
+#================================ General =====================================
+
+tags: ["heartbeat"]
+
+  #----------------------------- Logstash output --------------------------------
+output.logstash:
+  enabled: true
+  hosts: [{{ beat_logstash_url }}]
+  ssl.enabled: true
+  ssl.key_passphrase: "${KEY}"
+  ssl.verification_mode: none
+
+#================================ Logging =====================================
+
+logging.level: info
+logging.metrics.enabled: false

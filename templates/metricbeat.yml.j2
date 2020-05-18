@@ -1,0 +1,15 @@
+metricbeat.config.modules:
+  path: ${path.config}/modules.d/*.yml
+  reload.enabled: false
+tags: ["metricbeat"]
+fields:
+  type: metricsets
+fields_under_root: true
+output.logstash:
+  hosts: [{{ beat_logstash_url }}]
+  ttl: 3600s
+  ssl.enabled: true
+  ssl.key_passphrase: "${KEY}"
+  ssl.verification_mode: full
+logging.level: info
+logging.metrics.enabled: false

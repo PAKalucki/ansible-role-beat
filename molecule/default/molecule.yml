@@ -1,0 +1,43 @@
+---
+dependency:
+  name: galaxy
+driver:
+  name: docker
+lint:
+  name: yamllint
+  enabled: False
+platforms:
+  - name: instance
+    image: ansibleroletest_beat:latest
+    command: "/usr/sbin/init"
+    pre_build_image: true
+    network_mode: host
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+    privileged: true
+provisioner:
+  name: ansible
+  lint:
+    name: ansible-lint
+    enabled: True
+    options:
+      x: ["701","702","703","704","305","301"]
+verifier:
+  name: goss
+  lint:
+    name: yamllint
+    enabled: False
+
+scenario:
+  name: default  # optional
+  test_sequence:
+    - lint
+    - dependency
+    - cleanup
+    - destroy
+    - syntax
+    - create
+    - prepare
+    - converge
+    - cleanup
+    - destroy

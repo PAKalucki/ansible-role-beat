@@ -1,0 +1,94 @@
+---
+- name: "Download Beat RPM to server"
+  get_url:
+    dest: "/tmp/{{ beat_name }}-{{ beat_version }}-{{ beat_architecture }}.rpm"
+    url: "https://artifacts.elastic.co/downloads/beats/{{ beat_name }}/{{ beat_name }}-{{ beat_version }}-{{ beat_architecture }}.rpm"
+    force: yes
+    use_proxy: no
+    timeout: 60
+    validate_certs: no
+
+- name: "Check if service already exists"
+  stat:
+    path: "/lib/systemd/system/{{ beat_name }}.service"
+  register: beat_service_stat_result
+
+- name: "Stop service"
+  when: beat_service_stat_result.stat.exists
+  systemd:
+    name: "{{ beat_name }}"
+    state: stopped
+
+- name: "Remove old beat"
+  yum:
+    name: "{{ beat_name }}"
+    state: absent
+
+- name: "Remove old files"
+  file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - "{{ beat_data_path }}"
+    - "{{ beat_config_path }}"
+    - "{{ beat_log_path }}"
+    - "{{ beat_home_path }}"
+
+- name: "Install beat"
+  yum:
+    name: "/tmp/{{ beat_name }}-{{ beat_version }}-{{ beat_architecture }}.rpm"
+    state: present 
+
+- name: "Create beat service"
+  template:
+    dest: "/lib/systemd/system/{{ beat_name }}.service"
+    src: "{{ beat_name }}.service.j2"
+    force: yes
+    owner: root 
+    group: root
+
+- name: "Create config file"
+  template:
+    dest: "{{ beat_config_path }}/{{ beat_name }}.yml"
+    src: "{{ beat_name }}.yml.j2"
+    force: yes
+    group: "{{ beat_group }}" 
+    owner: "{{ beat_user }}"
+
+- name: "Create beat keystore"
+  shell:
+    creates: "{{ beat_data_path }}/{{ beat_name }}/{{ beat_name }}.keystore"
+    cmd: "{{ beat_name }} keystore create --force"
+
+- name: "Create secret key"
+  expect:
+    command: "{{ beat_name }} keystore add --force KEY"
+    responses:
+      Enter value for(.*): "{{ beat_key_value }}"
+    timeout: 30
+  register: beat_expect_result
+  failed_when: "'Successfully updated the keystore' not in beat_expect_result.stdout"
+
+- name: "Set owner on files"
+  file:
+    path: "{{ item }}"
+    recurse: yes
+    state: directory
+    group: "{{ beat_group }}"
+    owner: "{{ beat_user }}"
+  loop:
+    - "{{ beat_data_path }}"
+    - "{{ beat_config_path }}"
+    - "{{ beat_log_path }}"
+
+- name: "Start beat service"
+  systemd:
+    name: "{{ beat_name }}"
+    enabled: yes
+    daemon_reload: yes
+    state: started
+
+- name: "Remove old rpm"
+  file:
+    path: "/tmp/{{ beat_name }}-{{ beat_version }}-{{ beat_architecture }}.rpm"
+    state: absent

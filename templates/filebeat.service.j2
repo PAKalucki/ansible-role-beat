@@ -1,0 +1,13 @@
+[Unit]
+Description={{ beat_name }}
+Documentation=https://www.elastic.co/guide/en/beats/{{ beat_name }}/current/index.html
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+User={{ beat_user }}
+ExecStart={{ beat_home_path }}/bin/{{ beat_name }} -c {{ beat_config_path }}/{{ beat_name }}.yml -path.home {{ beat_home_path }} -path.config {{ beat_config_path }} -path.data {{ beat_data_path }} -path.logs {{ beat_log_path }}
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

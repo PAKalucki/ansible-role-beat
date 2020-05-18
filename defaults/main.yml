@@ -1,0 +1,12 @@
+---
+beat_version: 6.8.8
+beat_architecture: x86_64
+beat_name: metricbeat
+beat_user: root
+beat_group: root
+beat_logstash_url: '"localhost:5068"'
+beat_data_path: "/var/lib/{{ beat_name }}"
+beat_config_path: "/etc/{{ beat_name }}"
+beat_log_path: "/var/log/{{ beat_name }}"
+beat_home_path: "/usr/share/{{ beat_name }}"
+beat_key_value: ""
